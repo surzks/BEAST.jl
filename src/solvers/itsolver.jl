@@ -91,7 +91,13 @@ function LinearAlgebra.mul!(y::AbstractVecOrMat, solver::GMRESSolver, x::Abstrac
     return y
 end
 
-LinearAlgebra.adjoint(A::GMRESSolver) = GMRESSolver(adjoint(A.linear_operator), A.maxiter, A.restart, A.abstol, A.reltol, A.verbose)
+LinearAlgebra.adjoint(A::GMRESSolver) = GMRESSolver(adjoint(A.linear_operator);
+    maxiter=A.maxiter,
+    restart=A.restart,
+    abstol=A.abstol,
+    reltol=A.reltol,
+    left_preconditioner=A.left_preconditioner,
+    verbose=A.verbose)
 LinearAlgebra.transpose(A::GMRESSolver) = GMRESSolver(transpose(A.linear_operator), A.maxiter, A.restart, A.abstol, A.reltol, A.verbose)
 
 
@@ -110,7 +116,7 @@ function gmres_ch(eq::DiscreteEquation; maxiter=0, restart=0, tol=0)
     if tol == 0
         invZ = GMRESSolver(Z, maxiter=maxiter, restart=restart)
     else
-        invZ = GMRESSolver(Z, maxiter=maxiter, restart=restart, tol=tol)
+        invZ = GMRESSolver(Z, maxiter=maxiter, restart=restart, reltol=tol)
     end
     x, ch = solve(invZ, b)
     # x = invZ * b

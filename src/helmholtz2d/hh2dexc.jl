@@ -53,8 +53,8 @@ function curl(m::HH2DPlaneWave)
     return curlHH2DPlaneWave(d, polarization, m.gamma, m.amplitude * (m.gamma))
 end
 
-*(a::Number, m::HH2DPlaneWave) = HH2DMonopole(m.direction, m.gamma, a * m.amplitude)
-*(a::Number, m::gradHH2DPlaneWave) = gradHH2DMonopole(m.direction, m.gamma, a * m.amplitude)
+*(a::Number, m::HH2DPlaneWave) = HH2DPlaneWave(m.direction, m.gamma, a * m.amplitude)
+*(a::Number, m::gradHH2DPlaneWave) = gradHH2DPlaneWave(m.direction, m.gamma, a * m.amplitude)
 *(a::Number, m::curlHH2DPlaneWave) = curlHH2DPlaneWave(m.direction, m.polarization, m.gamma, a * m.amplitude)
 
 
@@ -118,6 +118,102 @@ function (f::NormalDerivative{T,F})(manipoint) where {T,F<:HH2DMonopole}
     return dot(n, grad_m(r))
 end
 
+"""
+    HH2DDirectedMonopole
+
+Potential of a monopole-type point source (e.g., of an electric charge)
+"""
+struct HH2DDirectedMonopole{P,K,T}
+    position::P
+    direction::P
+    gamma::K
+    amplitude::T
+end
+
+scalartype(x::HH2DDirectedMonopole{P,K,T}) where {P,K,T} = promote_type(eltype(P), K, T)
+
+function (f::HH2DDirectedMonopole)(r)
+    γ = f.gamma
+    p = f.position
+    d = f.direction
+    a = f.amplitude
+
+    x = r[1] - p[1]
+    y = r[2] - p[2]
+    
+    Ix = d[1]
+    Iy = d[2]
+
+    ρ = norm(r - p)
+
+    k = -im*γ
+
+    dhankelh2(x) = -hankelh2(1, x) # H₀^(2)'
+
+    return a * k * dhankelh2(k*ρ) * (Iy * x - Ix * y) / ρ
+end
+
+struct curlHH2DDirectedMonopole{P,K,T} <: Functional{T}
+    position::P
+    direction::P
+    gamma::K
+    amplitude::T
+end
+
+function (f::curlHH2DDirectedMonopole)(r)
+    γ = f.gamma
+    p = f.position
+    d = f.direction
+    a = f.amplitude
+
+    x = r[1] - p[1]
+    y = r[2] - p[2]
+    
+    Ix = d[1]
+    Iy = d[2]
+
+    ρ = norm(r - p)
+
+    k = -im*γ
+
+    dhankelh2(x) = -hankelh2(1, x)  # H₀^(2)'
+    ddhankelh2(x) = hankelh2(1, x)/x - hankelh2(0, x)  # H₀^(2)''
+
+    X = ddhankelh2(k * ρ) * k * (Iy * x - Ix * y) / ρ^2 * y + dhankelh2(k * ρ) * (-Ix / ρ  - (Iy * x - Ix * y) * y / ρ^3)
+    Y = ddhankelh2(k * ρ) * k * (Iy * x - Ix * y) / ρ^2 * x + dhankelh2(k * ρ) * (+Iy / ρ  - (Iy * x - Ix * y) * x / ρ^3)
+ 
+    return a * k * SVector(X, -Y)
+end
+
+scalartype(f::curlHH2DDirectedMonopole{P,K,T}) where {P,K,T} = promote_type(eltype(P), K, T)
+
+function curl(m::HH2DDirectedMonopole)
+    return curlHH2DDirectedMonopole(m.position, m.direction, m.gamma, m.amplitude)
+end
+
+*(a::Number, m::HH2DDirectedMonopole) = HH2DDirectedMonopole(
+    m.position,
+    m.direction,
+    m.gamma,
+    a * m.amplitude
+)
+
+#=
+*(a::Number, m::gradHH2DDirectedMonopole) = gradHH2DDirectedMonopole(
+    m.position,
+    m.direction,
+    m.gamma,
+    a * m.amplitude
+)
+=#
+
+*(a::Number, m::curlHH2DDirectedMonopole) = curlHH2DDirectedMonopole(
+    m.position,
+    m.direction,
+    m.gamma,
+    a * m.amplitude
+)
+
 struct ScalarTrace{T,F} <: Functional{T}
     field::F
 end
@@ -159,6 +255,7 @@ function (ϕ::TangentTrace)(p)
     x = cartesian(p)
     t = tangents(p,1)
     t = t / norm(t)
+
     return dot(t, F(x))
 end
 

@@ -49,7 +49,7 @@ scalartype(f::curlHH2DPlaneWave{P,K,T}) where {P,K,T} = promote_type(eltype(P), 
 
 function curl(m::HH2DPlaneWave)
     d = m.direction
-    polarization = -SVector(-d[2], d[1]) # By using a minus sign here, the amplitude stays positive
+    polarization = -SVector(+d[2], -d[1]) # By using a minus sign here, the amplitude stays positive
     return curlHH2DPlaneWave(d, polarization, m.gamma, m.amplitude * (m.gamma))
 end
 
@@ -80,7 +80,7 @@ function (f::HH2DMonopole)(r)
     p = f.position
     a = f.amplitude
 
-    return a*hankelh2(0, -im*γ * norm(r - p))
+    return a / (4 * im) * hankelh2(0, -im*γ * norm(r - p))
 end
 
 struct gradHH2DMonopole{P,K,T}
@@ -98,7 +98,7 @@ function (f::gradHH2DMonopole)(r)
     vecR = r - p
     R = norm(vecR)
 
-    return a * -hankelh2(1, -im*γ * R) * (-im*γ) * vecR / R
+    return a / (4 * im) * -hankelh2(1, -im*γ * R) * (-im*γ) * vecR / R
 end
 
 function grad(m::HH2DMonopole)
@@ -144,13 +144,13 @@ function (f::HH2DDirectedMonopole)(r)
     Ix = d[1]
     Iy = d[2]
 
-    ρ = norm(r - p)
+    R = norm(r - p)
 
     k = -im*γ
 
     dhankelh2(x) = -hankelh2(1, x) # H₀^(2)'
 
-    return a * k * dhankelh2(k*ρ) * (Iy * x - Ix * y) / ρ
+    return a / (4 * im) * k * dhankelh2(k*R) * (Iy * x - Ix * y) / R
 end
 
 struct curlHH2DDirectedMonopole{P,K,T} <: Functional{T}
@@ -172,17 +172,17 @@ function (f::curlHH2DDirectedMonopole)(r)
     Ix = d[1]
     Iy = d[2]
 
-    ρ = norm(r - p)
+    R = norm(r - p)
 
     k = -im*γ
 
     dhankelh2(x) = -hankelh2(1, x)  # H₀^(2)'
     ddhankelh2(x) = hankelh2(1, x)/x - hankelh2(0, x)  # H₀^(2)''
 
-    X = ddhankelh2(k * ρ) * k * (Iy * x - Ix * y) / ρ^2 * y + dhankelh2(k * ρ) * (-Ix / ρ  - (Iy * x - Ix * y) * y / ρ^3)
-    Y = ddhankelh2(k * ρ) * k * (Iy * x - Ix * y) / ρ^2 * x + dhankelh2(k * ρ) * (+Iy / ρ  - (Iy * x - Ix * y) * x / ρ^3)
+    X = ddhankelh2(k * R) * k * (Iy * x - Ix * y) / R^2 * y + dhankelh2(k * R) * (-Ix / R  - (Iy * x - Ix * y) * y / R^3)
+    Y = ddhankelh2(k * R) * k * (Iy * x - Ix * y) / R^2 * x + dhankelh2(k * R) * (+Iy / R  - (Iy * x - Ix * y) * x / R^3)
  
-    return a * k * SVector(X, -Y)
+    return a / (4 * im) * k * SVector(X, -Y)
 end
 
 scalartype(f::curlHH2DDirectedMonopole{P,K,T}) where {P,K,T} = promote_type(eltype(P), K, T)

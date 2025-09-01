@@ -235,11 +235,11 @@ let
     yp = ρp * sin(φp)
 
     # Choosing the amplitude of Einc such that [Eq 6.5.11, Jin] is satisfied
-    Ez_lc_Einc = Helmholtz2D.monopole(;position = SVector(xp,yp), wavenumber=k, amplitude = -η0*k*I/4)
+    Ez_lc_Einc = Helmholtz2D.monopole(;position = SVector(xp,yp), wavenumber=k, amplitude = -η0*k*I*im)
     ez_lc_Einc = assemble(DirichletTrace(Ez_lc_Einc),X0)
     j_TMEFIE_lc = M_TMEFIE \ ez_lc_Einc
 
-    Ez_lc_sca_num = - potential(HH2DSingleLayerNear(𝒮),pts , j_TMEFIE_lc, X0;type=ComplexF64)
+    Ez_lc_sca_num = -potential(HH2DSingleLayerNear(𝒮),pts , j_TMEFIE_lc, X0;type=ComplexF64)
 
     Ez_lc_sca_ana = TM_pec_line_curr_E(I, k, a, pts, SVector(ρp,φp))
 

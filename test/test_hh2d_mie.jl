@@ -220,7 +220,7 @@ let
 
     # TM-MFIE
     Ht_pw_inc =  - 1.0 / (im * ω * μ0) * curl(Ez_pw_inc)
-    ht_pw_inc = assemble(TangentTrace(Ht_pw_inc), X0)
+    ht_pw_inc = -assemble(TangentTrace(Ht_pw_inc), X0)
 
     j_TMMFIE_pw =  M_TMMFIE \ ht_pw_inc
 
@@ -261,18 +261,18 @@ let
     # 1. Excitation: Planewave
     H0 = 1.0
     Hz_pw_inc = Helmholtz2D.planewave(; amplitude=H0, wavenumber=k, direction=SVector(1.0, 0.0))
-    hz_pw_inc = -assemble(DirichletTrace(Hz_pw_inc), X1)
+    hz_pw_inc = assemble(DirichletTrace(Hz_pw_inc), X1)
     j_TEMFIE_pw = M_TEMFIE \ hz_pw_inc
 
 
-    Hz_pw_sca_num = -potential(HH2DDoubleLayerNear(𝒟), pts, j_TEMFIE_pw, X1; type=ComplexF64)
+    Hz_pw_sca_num = potential(HH2DDoubleLayerNear(𝒟), pts, j_TEMFIE_pw, X1; type=ComplexF64)
     Hz_pw_sca_ana = TE_pec_planewave_H(H0, k, a, pts)
 
     @test norm(Hz_pw_sca_num - Hz_pw_sca_ana) /norm(Hz_pw_sca_ana) < 0.0015
 
     Et_pw_inc = 1 / (im * ω * ε0) * curl(Hz_pw_inc)
     @test Et_pw_inc.direction == Hz_pw_inc.direction
-    @test Et_pw_inc.polarization == SVector(0.0, -1.0)
+    @test Et_pw_inc.polarization == SVector(0.0, 1.0)
     @test Et_pw_inc.amplitude ≈ Et_pw_inc.gamma / (im * ω * ε0) atol=1e-15
     et_pw_inc = assemble(TangentTrace(Et_pw_inc), X1)
 

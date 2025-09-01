@@ -242,6 +242,9 @@ end
 integrand(s::ScalarTrace, tx, fx) = dot(tx.value, fx)
 scalartype(s::ScalarTrace{T}) where {T} = T
 
+# We assume an orthogonal system (t, n, z)
+# This deviates from Moritas book, where they assume
+# (n, t, z)
 mutable struct TangentTrace{T,F} <: Functional{T}
     field::F
 end

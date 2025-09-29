@@ -280,7 +280,7 @@ let
 
     @test norm(j_TEEFIE_pw - j_TEMFIE_pw)/norm(j_TEMFIE_pw) < 0.007
 
-    Et_pw_sca_num = potential(HH2DHyperSingularNear(𝒩), pts, j_TEEFIE_pw, X1; type=SVector{2, ComplexF64})
+    Et_pw_sca_num = -potential(HH2DHyperSingularNear(𝒩), pts, j_TEEFIE_pw, X1; type=SVector{2, ComplexF64})
     Et_pw_sca_ana = TE_pec_planewave_E(H0, k, a, pts)
 
     # We compute the scattered Ez component (scalar)

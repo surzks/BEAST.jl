@@ -83,6 +83,34 @@ function (f::HH2DMonopole)(r)
     return a / (4 * im) * hankelh2(0, -im*γ * norm(r - p))
 end
 
+struct curlHH2DMonopole{P,K,T}
+    position::P
+    gamma::K
+    amplitude::T
+end
+
+scalartype(x::curlHH2DMonopole{P,K,T}) where {P,K,T} = promote_type(eltype(P), K, T)
+
+function (f::curlHH2DMonopole)(r)
+    a = f.amplitude
+    γ = f.gamma
+    p = f.position
+    vecR = r-p
+    R = norm(vecR)
+
+    return a / (4 * im) * 1/R * (-im*γ) * (-hankelh2(1,(-im*γ*R))) * (SVector(-vecR[2],vecR[1]))
+end
+
+function (f::curlHH2DMonopole)(mp::CompScienceMeshes.MeshPointNM)
+    fieldval = f(cartesian(mp))
+    t = tangents(mp, 1)
+    return dot(t, fieldval)
+end
+
+function curl(m::HH2DMonopole)
+    return curlHH2DMonopole(m.position, m.gamma, m.amplitude)
+end
+
 struct gradHH2DMonopole{P,K,T}
     position::P
     gamma::K
@@ -106,6 +134,7 @@ function grad(m::HH2DMonopole)
 end
 
 *(a::Number, m::HH2DMonopole) = HH2DMonopole(m.position, m.gamma, a * m.amplitude)
+*(a::Number, m::curlHH2DMonopole) = curlHH2DMonopole(m.position, m.gamma, a * m.amplitude)
 *(a::Number, m::gradHH2DMonopole) = gradHH2DMonopole(m.position, m.gamma, a * m.amplitude)
 
 dot(::NormalVector, m::gradHH2DMonopole) = NormalDerivative(HH2DMonopole(m.position, m.gamma, m.amplitude))
